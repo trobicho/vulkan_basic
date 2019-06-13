@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/23 11:49:19 by trobicho          #+#    #+#             */
-/*   Updated: 2019/05/24 19:38:23 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/13 10:28:23 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ int		shader_create_module(t_vulk *vulk, const char *bytecode
 	shader_info = (VkShaderModuleCreateInfo){};
 	shader_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	shader_info.codeSize = size;
-	printf("codeSize = %d\n", shader_info.codeSize);
+	printf("codeSize = %lu\n", shader_info.codeSize);
 	shader_info.pCode = (const uint32_t*)bytecode;
 	/*-----------------------------------
 	printf("----------------------------\n");

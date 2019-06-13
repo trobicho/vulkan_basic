@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/22 17:58:08 by trobicho          #+#    #+#             */
-/*   Updated: 2019/05/24 19:42:18 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/13 12:52:07 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,14 +46,56 @@ static VkPipelineShaderStageCreateInfo	*pipe_shader_create(
 	return (ret_info);
 }
 
+static int		gpu_compute_pipe_create(t_vulk *vulk)
+{
+	char							*comp_shader;
+	int								comp_size;
+	VkShaderModule					comp_shader_module;
+	VkPipelineLayoutCreateInfo		pipeline_layout_info;
+	VkComputePipelineCreateInfo		pipeline_info;
+	VkPipelineShaderStageCreateInfo	comp_info;
+
+	comp_shader = shader_load("shader/comp.spv", &comp_size);
+	printf("compute shader size (%d)\n", comp_size);
+	if (shader_create_module(vulk, comp_shader, comp_size
+		, &comp_shader_module) == -1)
+		return (-1);
+
+
+	pipeline_layout_info = (VkPipelineLayoutCreateInfo){};
+	pipeline_layout_info.sType =
+		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	if (vkCreatePipelineLayout(vulk->device, &pipeline_layout_info, NULL
+		, &vulk->compute.pipeline_layout) != VK_SUCCESS)
+	{
+		printf("failed to create compute pipeline layout!\n");
+		return (-1);
+	}
+	pipeline_info = (VkComputePipelineCreateInfo){};
+	pipeline_info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	pipeline_info.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	pipeline_info.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+	pipeline_info.stage.module = comp_shader_module;
+	pipeline_info.stage.pName = "main";
+	pipeline_info.layout = vulk->compute.pipeline_layout;
+	if (vkCreateComputePipelines(vulk->device, VK_NULL_HANDLE, 1
+			, &pipeline_info, NULL, &vulk->compute.pipeline) != VK_SUCCESS)
+	{
+		printf("failed to create compute pipeline!");
+		return (-1);
+	}
+	vkDestroyShaderModule(vulk->device, comp_shader_module, NULL);
+	return (0);
+}
+
 int	gpu_pipeline_create(t_vulk *vulk)
 {
-	char				*vert_shader;
-	char				*frag_shader;
-	int					vert_size;
-	int					frag_size;
-	VkShaderModule		vert_shader_module;
-	VkShaderModule		frag_shader_module;
+	char							*vert_shader;
+	char							*frag_shader;
+	int								vert_size;
+	int								frag_size;
+	VkShaderModule					vert_shader_module;
+	VkShaderModule					frag_shader_module;
 	VkPipelineLayoutCreateInfo		pipeline_layout_info;
 	VkGraphicsPipelineCreateInfo	pipeline_info;
 
@@ -65,6 +107,7 @@ int	gpu_pipeline_create(t_vulk *vulk)
 	VkPipelineVertexInputStateCreateInfo	vert_input_info;
 	VkPipelineShaderStageCreateInfo			*shader_stage;
 
+	gpu_compute_pipe_create(vulk);
 	vert_shader = shader_load("shader/vert.spv", &vert_size);
 	frag_shader = shader_load("shader/frag.spv", &frag_size);
 	printf("shader size (%d, %d)\n", vert_size, frag_size);

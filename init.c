@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:38 by trobicho          #+#    #+#             */
-/*   Updated: 2019/05/26 14:56:07 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/13 12:48:19 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,18 +17,10 @@
 #include "init.h"
 #include "init_swap_chain.h"
 #include "gpu_pipeline.h"
-#include "validation_layer.h"
+#include "descriptor.h"
 
 static int	vulk_create_instance(t_vulk *vulk)
 {
-	char	**val_layer = {"VK_LAYER_KHRONOS_validation"};
-
-	if (vulk->enable_val_layer && !val_layer_check(val_layer, 1))
-	{
-		printf("validation layers requested, but not available!\n");
-		return (-1);
-	}
-
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = "Hello Triangle";
@@ -99,7 +91,7 @@ static int	render_pass_create(t_vulk *vulk)
 	if (vkCreateRenderPass(vulk->device, &render_pass_info, NULL
 			, &vulk->render_pass) != VK_SUCCESS)
 	{
-		printf("failed ton create render pass!\n");
+		printf("failed to create render pass!\n");
 		return (-1);
 	}
 	return (0);
@@ -251,7 +243,8 @@ static int	vulk_swap_chain(t_vulk *vulk)
 	swap_info.imageColorSpace = format.colorSpace;
 	swap_info.imageExtent = extent;
 	swap_info.imageArrayLayers = 1;
-	swap_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	swap_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+		| VK_IMAGE_USAGE_STORAGE_BIT;
 	swap_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	swap_info.queueFamilyIndexCount = 0;
 	swap_info.pQueueFamilyIndices = NULL;
@@ -368,6 +361,49 @@ static int	command_pool_create(t_vulk *vulk)
 	return (0);
 }
 
+static int	compute_command_buffer_create(t_vulk *vulk)
+{
+	VkCommandBufferAllocateInfo alloc_info;
+	VkCommandBufferBeginInfo	begin_info;
+
+	alloc_info = (VkCommandBufferAllocateInfo){};
+	alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	alloc_info.commandPool = vulk->command_pool;
+	alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	alloc_info.commandBufferCount = 1;
+
+	if (vkAllocateCommandBuffers(vulk->device, &alloc_info
+			, &vulk->compute.command_buffer) != VK_SUCCESS)
+	{
+		printf("failed to allocate compute command buffer!\n");
+		return (-1);
+	}
+	begin_info = (VkCommandBufferBeginInfo){};
+	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+	begin_info.pInheritanceInfo = NULL;
+	if (vkBeginCommandBuffer(vulk->compute.command_buffer, &begin_info)
+		!= VK_SUCCESS)
+	{
+		printf("failed to begin recording compute command buffer!\n");
+		return (-1);
+	}
+	vkCmdBindPipeline(vulk->compute.command_buffer
+		, VK_PIPELINE_BIND_POINT_COMPUTE, vulk->compute.pipeline);
+	vkCmdBindDescriptorSets(vulk->compute.command_buffer
+		,VK_PIPELINE_BIND_POINT_COMPUTE, vulk->compute.pipeline_layout
+		, 0, 1, &vulk->compute.desc_set_pre, 0, NULL);
+	vkCmdDispatch(vulk->compute.command_buffer
+		, vulk->swap_chain_extent.width / 16
+		, vulk->swap_chain_extent.height / 16, 1);
+	if (vkEndCommandBuffer(vulk->compute.command_buffer) != VK_SUCCESS)
+	{
+		printf("failed to record command buffer!\n");
+		return (-1);
+	}
+	return (0);
+}
+
 static int	command_buffer_create(t_vulk *vulk)
 {
 	int							i;
@@ -376,6 +412,7 @@ static int	command_buffer_create(t_vulk *vulk)
 	VkCommandBufferBeginInfo	begin_info;
 	VkRenderPassBeginInfo		render_pass_info;
 	VkClearValue				clear_color;
+	VkImageMemoryBarrier		img_mem_barrier;
 
 	vkGetSwapchainImagesKHR(vulk->device, vulk->swap_chain, &img_count, NULL);
 	if ((vulk->command_buffer = (VkCommandBuffer*)
@@ -389,7 +426,7 @@ static int	command_buffer_create(t_vulk *vulk)
 	if (vkAllocateCommandBuffers(vulk->device, &alloc_info
 			, vulk->command_buffer) != VK_SUCCESS)
 	{
-		printf("failed to create allocate buffer!\n");
+		printf("failed to allocate command buffer!\n");
 		return (-1);
 	}
 	i = 0;
@@ -414,8 +451,24 @@ static int	command_buffer_create(t_vulk *vulk)
 		render_pass_info.renderArea.extent = vulk->swap_chain_extent;
 		render_pass_info.clearValueCount = 1;
 		render_pass_info.pClearValues = &clear_color;
+		img_mem_barrier = (VkImageMemoryBarrier){};
+		img_mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		img_mem_barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+		img_mem_barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+		img_mem_barrier.image = vulk->swap_chain_img[i];
+		img_mem_barrier.subresourceRange = (VkImageSubresourceRange){VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+		img_mem_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+		img_mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		vkCmdBeginRenderPass(vulk->command_buffer[i], &render_pass_info
 			, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdPipelineBarrier(vulk->command_buffer[i]
+			, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+			, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+			, VK_DEPENDENCY_BY_REGION_BIT
+			, 0, NULL, 0, NULL, 1, &img_mem_barrier);
+		vkCmdBindDescriptorSets(vulk->command_buffer[i]
+			,VK_PIPELINE_BIND_POINT_COMPUTE, vulk->pipeline_layout
+			, 0, 1, &vulk->compute.desc_set_post, 0, NULL);
 		vkCmdBindPipeline(vulk->command_buffer[i]
 			, VK_PIPELINE_BIND_POINT_GRAPHICS, vulk->graphics_pipeline);
 		vkCmdDraw(vulk->command_buffer[i], 4, 1, 0, 0);
@@ -437,7 +490,9 @@ static int	semaphore_create(t_vulk *vulk)
 	semaphore_info = (VkSemaphoreCreateInfo){};
 	semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	if (vkCreateSemaphore(vulk->device, &semaphore_info, NULL
-			, &vulk->semaphore_image_available) != VK_SUCCESS)
+			, &vulk->semaphore_image_available) != VK_SUCCESS
+			|| vkCreateSemaphore(vulk->device, &semaphore_info, NULL
+			, &vulk->semaphore_render_finish) != VK_SUCCESS)
 	{
 		printf("failed to create semaphore!\n");
 		return (-1);
@@ -465,11 +520,19 @@ int			vulk_init(t_vulk *vulk)
 		return (-1);
 	if (render_pass_create(vulk) == -1)
 		return (-1);
+	if (create_desc_layout(vulk) == -1)
+		return (-1);
 	if (gpu_pipeline_create(vulk) == -1)
 		return (-1);
 	if (framebuffer_create(vulk) == -1)
 		return (-1);
 	if (command_pool_create(vulk) == -1)
+		return (-1);
+	if (create_desc_pool(vulk) == -1)
+		return (-1);
+	if (create_desc_set(vulk) == -1)
+		return (-1);
+	if (compute_command_buffer_create(vulk) == -1)
 		return (-1);
 	if (command_buffer_create(vulk) == -1)
 		return (-1);

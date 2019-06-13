@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 17:55:04 by trobicho          #+#    #+#             */
-/*   Updated: 2019/05/25 16:46:09 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/13 11:52:19 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,12 +26,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void	draw_frame(t_vulk *vulk)
+static int	draw_frame(t_vulk *vulk)
 {
 	uint32_t				img_index;
 	VkSubmitInfo			submit_info;
 	VkPipelineStageFlags	wait_stage;
 	VkPresentInfoKHR		present_info;
+	VkCommandBuffer			command_buffer[2];
 
 	vkAcquireNextImageKHR(vulk->device, vulk->swap_chain, UINT64_MAX,
 		vulk->semaphore_image_available, VK_NULL_HANDLE, &img_index);
@@ -41,8 +42,10 @@ static void	draw_frame(t_vulk *vulk)
 	submit_info.pWaitSemaphores = &vulk->semaphore_image_available;
 	wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	submit_info.pWaitDstStageMask = &wait_stage;
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers = &vulk->command_buffer[img_index];
+	submit_info.commandBufferCount = 2;
+	command_buffer[0] = vulk->compute.command_buffer;
+	command_buffer[1] = vulk->command_buffer[img_index];
+	submit_info.pCommandBuffers = command_buffer;
 	submit_info.signalSemaphoreCount = 1;
 	submit_info.pSignalSemaphores = &vulk->semaphore_render_finish;
 	if (vkQueueSubmit(vulk->queue_graphic, 1, &submit_info, VK_NULL_HANDLE)
@@ -60,6 +63,7 @@ static void	draw_frame(t_vulk *vulk)
 	present_info.pImageIndices = &img_index;
 	present_info.pResults = NULL;
 	vkQueuePresentKHR(vulk->queue_graphic, &present_info);
+	vkQueueWaitIdle(vulk->queue_graphic);
 	return (0);
 }
 
@@ -70,13 +74,13 @@ static void	main_loop(t_vulk *vulk)
 		glfwPollEvents();
 		draw_frame(vulk);
 	}
+	vkDeviceWaitIdle(vulk->device);
 }
 
 int			main(int ac, char **av)
 {
 	t_vulk	vulk;
 
-	vulk.enable_val_layer = 0;
 	if (vulk_init(&vulk) == -1)
 		return (EXIT_FAILURE);
 

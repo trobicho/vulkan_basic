@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:35 by trobicho          #+#    #+#             */
-/*   Updated: 2019/05/25 15:57:05 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/13 12:59:18 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,10 +16,22 @@
 # define GLFW_INCLUDE_VULKAN
 # include "GLFW/glfw3.h"
 
+typedef struct	s_compute
+{
+	VkPipelineLayout		pipeline_layout;
+	VkPipeline				pipeline;
+	VkDescriptorImageInfo	img_desc;
+	VkDescriptorSetLayout	desc_set_layout_pre;
+	VkDescriptorSetLayout	desc_set_layout_post;
+	VkDescriptorSet			desc_set_pre;
+	VkDescriptorSet			desc_set_post;
+	VkSampler				sampler;
+	VkCommandBuffer			command_buffer;
+}				t_compute;
+
 typedef struct	s_vulk
 {
 	GLFWwindow			*win;
-	int					enable_val_layer;
 	VkInstance			instance;
 	VkDevice			device;
 	VkPhysicalDevice	dev_phy;
@@ -36,8 +48,10 @@ typedef struct	s_vulk
 	VkFramebuffer		*framebuffer;
 	VkCommandPool		command_pool;
 	VkCommandBuffer		*command_buffer;
+	VkDescriptorPool	desc_pool;
 	VkSemaphore			semaphore_image_available;
 	VkSemaphore			semaphore_render_finish;
+	t_compute			compute;
 }				t_vulk;
 
 int				vulk_init(t_vulk *vulk);

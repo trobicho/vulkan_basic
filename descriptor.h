@@ -1,18 +1,23 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   validation_layer.h                                 :+:      :+:    :+:   */
+/*   descriptor.h                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
+/*   By: trobicho <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/05/24 16:27:58 by trobicho          #+#    #+#             */
-/*   Updated: 2019/05/24 16:43:53 by trobicho         ###   ########.fr       */
+/*   Created: 2019/06/13 11:56:33 by trobicho          #+#    #+#             */
+/*   Updated: 2019/06/13 12:48:48 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef VALIDATION_LAYER
-# define VALIDATION_LAYER
+#ifndef DESCRIPTOR_H
+# define DESCRIPTOR_H
+
+# define GLFW_INCLUDE_VULKAN
+# include "GLFW/glfw3.h"
 # include "init.h"
 
-int	val_layer_check(char **val_layer, int nb_layer);
+int	create_desc_layout(t_vulk *vulk);
+int	create_desc_pool(t_vulk *vulk);
+int	create_desc_set(t_vulk *vulk);
 #endif

@@ -43,7 +43,7 @@ void main()
 	float	col;
 
 	iter = marching(ro, rd);
-	col = iter / MAX_STEP;
+	col = (MAX_STEP - iter) / MAX_STEP;
 	if (iter >= MAX_STEP)
 		outColor = vec4(0.0, 0.0, 0.0, 1.0);
 	else
