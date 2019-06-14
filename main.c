@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 17:55:04 by trobicho          #+#    #+#             */
-/*   Updated: 2019/05/25 16:46:09 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/13 09:15:06 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void	draw_frame(t_vulk *vulk)
+static int draw_frame(t_vulk *vulk)
 {
 	uint32_t				img_index;
 	VkSubmitInfo			submit_info;
@@ -60,6 +60,7 @@ static void	draw_frame(t_vulk *vulk)
 	present_info.pImageIndices = &img_index;
 	present_info.pResults = NULL;
 	vkQueuePresentKHR(vulk->queue_graphic, &present_info);
+	vkQueueWaitIdle(vulk->queue_graphic);
 	return (0);
 }
 
@@ -70,6 +71,7 @@ static void	main_loop(t_vulk *vulk)
 		glfwPollEvents();
 		draw_frame(vulk);
 	}
+	vkDeviceWaitIdle(vulk->device);
 }
 
 int			main(int ac, char **av)
