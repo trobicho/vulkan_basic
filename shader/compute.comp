@@ -8,8 +8,8 @@ void	main()
 {
 	vec3	color;
 	ivec2	dim = imageSize(result_image);
-	vec2	uv = vec2(gl_GlobalInvocationID.xy) / dim;
+	vec2	uv = vec2(gl_LocalInvocationID.xy) /  16;
 
-	color = vec3(0.0, 1.0, 0.0);
+	color = vec3(uv.x, uv.y, 0.0);
 	imageStore(result_image, ivec2(gl_GlobalInvocationID.xy), vec4(color, 1.0));
 }

@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:35 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/13 12:59:18 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/14 09:21:48 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,10 +23,10 @@ typedef struct	s_compute
 	VkDescriptorImageInfo	img_desc;
 	VkDescriptorSetLayout	desc_set_layout_pre;
 	VkDescriptorSetLayout	desc_set_layout_post;
-	VkDescriptorSet			desc_set_pre;
-	VkDescriptorSet			desc_set_post;
+	VkDescriptorSet			*desc_set_pre;
+	VkDescriptorSet			*desc_set_post;
 	VkSampler				sampler;
-	VkCommandBuffer			command_buffer;
+	VkCommandBuffer			*command_buffer;
 }				t_compute;
 
 typedef struct	s_vulk

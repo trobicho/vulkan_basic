@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/22 17:58:08 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/13 12:52:07 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/14 09:30:44 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,8 @@ static int		gpu_compute_pipe_create(t_vulk *vulk)
 	pipeline_layout_info = (VkPipelineLayoutCreateInfo){};
 	pipeline_layout_info.sType =
 		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipeline_layout_info.setLayoutCount = 1;
+	pipeline_layout_info.pSetLayouts = &vulk->compute.desc_set_layout_pre;
 	if (vkCreatePipelineLayout(vulk->device, &pipeline_layout_info, NULL
 		, &vulk->compute.pipeline_layout) != VK_SUCCESS)
 	{
@@ -131,6 +133,8 @@ int	gpu_pipeline_create(t_vulk *vulk)
 	pipeline_layout_info = (VkPipelineLayoutCreateInfo){};
 	pipeline_layout_info.sType =
 		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipeline_layout_info.setLayoutCount = 1;
+	pipeline_layout_info.pSetLayouts = &vulk->compute.desc_set_layout_post;
 	if (vkCreatePipelineLayout(vulk->device, &pipeline_layout_info, NULL
 		, &vulk->pipeline_layout) != VK_SUCCESS)
 	{

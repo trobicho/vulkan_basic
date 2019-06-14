@@ -1,25 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   descriptor.h                                       :+:      :+:    :+:   */
+/*   command_buffer.h                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: trobicho <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/06/13 11:56:33 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/14 09:51:49 by trobicho         ###   ########.fr       */
+/*   Created: 2019/06/14 08:48:28 by trobicho          #+#    #+#             */
+/*   Updated: 2019/06/14 09:32:56 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef DESCRIPTOR_H
-# define DESCRIPTOR_H
-
-# define GLFW_INCLUDE_VULKAN
-# include "GLFW/glfw3.h"
+#ifndef COMMAND_BUFFER
+# define COMMAND_BUFFER
 # include "init.h"
 
-int		create_desc_layout(t_vulk *vulk);
-int		create_desc_pool(t_vulk *vulk);
-int		create_desc_set(t_vulk *vulk);
-void	update_compute_img_desc_set(VkDevice dev, VkDescriptorSet desc_set, 
-	VkImageView image_view, VkImageLayout layout);
+int	compute_command_buffer_create(t_vulk *vulk);
+int	command_buffer_create(t_vulk *vulk);
 #endif

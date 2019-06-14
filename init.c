@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:38 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/13 12:48:19 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/14 13:01:26 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include "init.h"
 #include "init_swap_chain.h"
 #include "gpu_pipeline.h"
+#include "command_buffer.h"
 #include "descriptor.h"
 
 static int	vulk_create_instance(t_vulk *vulk)
@@ -76,10 +77,9 @@ static int	render_pass_create(t_vulk *vulk)
 	subpass_dep.srcSubpass = VK_SUBPASS_EXTERNAL;
 	subpass_dep.dstSubpass = 0;
 	subpass_dep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpass_dep.srcAccessMask = 0;
+	subpass_dep.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 	subpass_dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	subpass_dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT
-		| VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	subpass_dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	render_pass_info.dependencyCount = 1;
 	render_pass_info.pDependencies = &subpass_dep;
 	render_pass_info = (VkRenderPassCreateInfo){};
@@ -357,128 +357,6 @@ static int	command_pool_create(t_vulk *vulk)
 	{
 		printf("failed to create command pool!\n");
 		return (-1);
-	}
-	return (0);
-}
-
-static int	compute_command_buffer_create(t_vulk *vulk)
-{
-	VkCommandBufferAllocateInfo alloc_info;
-	VkCommandBufferBeginInfo	begin_info;
-
-	alloc_info = (VkCommandBufferAllocateInfo){};
-	alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	alloc_info.commandPool = vulk->command_pool;
-	alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	alloc_info.commandBufferCount = 1;
-
-	if (vkAllocateCommandBuffers(vulk->device, &alloc_info
-			, &vulk->compute.command_buffer) != VK_SUCCESS)
-	{
-		printf("failed to allocate compute command buffer!\n");
-		return (-1);
-	}
-	begin_info = (VkCommandBufferBeginInfo){};
-	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-	begin_info.pInheritanceInfo = NULL;
-	if (vkBeginCommandBuffer(vulk->compute.command_buffer, &begin_info)
-		!= VK_SUCCESS)
-	{
-		printf("failed to begin recording compute command buffer!\n");
-		return (-1);
-	}
-	vkCmdBindPipeline(vulk->compute.command_buffer
-		, VK_PIPELINE_BIND_POINT_COMPUTE, vulk->compute.pipeline);
-	vkCmdBindDescriptorSets(vulk->compute.command_buffer
-		,VK_PIPELINE_BIND_POINT_COMPUTE, vulk->compute.pipeline_layout
-		, 0, 1, &vulk->compute.desc_set_pre, 0, NULL);
-	vkCmdDispatch(vulk->compute.command_buffer
-		, vulk->swap_chain_extent.width / 16
-		, vulk->swap_chain_extent.height / 16, 1);
-	if (vkEndCommandBuffer(vulk->compute.command_buffer) != VK_SUCCESS)
-	{
-		printf("failed to record command buffer!\n");
-		return (-1);
-	}
-	return (0);
-}
-
-static int	command_buffer_create(t_vulk *vulk)
-{
-	int							i;
-	uint32_t					img_count;
-	VkCommandBufferAllocateInfo alloc_info;
-	VkCommandBufferBeginInfo	begin_info;
-	VkRenderPassBeginInfo		render_pass_info;
-	VkClearValue				clear_color;
-	VkImageMemoryBarrier		img_mem_barrier;
-
-	vkGetSwapchainImagesKHR(vulk->device, vulk->swap_chain, &img_count, NULL);
-	if ((vulk->command_buffer = (VkCommandBuffer*)
-				malloc(sizeof(VkCommandBuffer) * img_count)) == NULL)
-		return (-1);
-	alloc_info = (VkCommandBufferAllocateInfo){};
-	alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	alloc_info.commandPool = vulk->command_pool;
-	alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	alloc_info.commandBufferCount = img_count;
-	if (vkAllocateCommandBuffers(vulk->device, &alloc_info
-			, vulk->command_buffer) != VK_SUCCESS)
-	{
-		printf("failed to allocate command buffer!\n");
-		return (-1);
-	}
-	i = 0;
-	begin_info = (VkCommandBufferBeginInfo){};
-	clear_color = (VkClearValue){0.0f, 0.0f, 0.0f, 1.0f};
-	while (i < img_count)
-	{
-		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-		begin_info.pInheritanceInfo = NULL;
-		if (vkBeginCommandBuffer(vulk->command_buffer[i], &begin_info)
-			!= VK_SUCCESS)
-		{
-			printf("failed to begin recording command buffer!\n");
-			return (-1);
-		}
-		render_pass_info = (VkRenderPassBeginInfo){};
-		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		render_pass_info.renderPass = vulk->render_pass;
-		render_pass_info.framebuffer = vulk->framebuffer[i];
-		render_pass_info.renderArea.offset = (VkOffset2D){0, 0};
-		render_pass_info.renderArea.extent = vulk->swap_chain_extent;
-		render_pass_info.clearValueCount = 1;
-		render_pass_info.pClearValues = &clear_color;
-		img_mem_barrier = (VkImageMemoryBarrier){};
-		img_mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		img_mem_barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
-		img_mem_barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
-		img_mem_barrier.image = vulk->swap_chain_img[i];
-		img_mem_barrier.subresourceRange = (VkImageSubresourceRange){VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-		img_mem_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-		img_mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		vkCmdBeginRenderPass(vulk->command_buffer[i], &render_pass_info
-			, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdPipelineBarrier(vulk->command_buffer[i]
-			, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
-			, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
-			, VK_DEPENDENCY_BY_REGION_BIT
-			, 0, NULL, 0, NULL, 1, &img_mem_barrier);
-		vkCmdBindDescriptorSets(vulk->command_buffer[i]
-			,VK_PIPELINE_BIND_POINT_COMPUTE, vulk->pipeline_layout
-			, 0, 1, &vulk->compute.desc_set_post, 0, NULL);
-		vkCmdBindPipeline(vulk->command_buffer[i]
-			, VK_PIPELINE_BIND_POINT_GRAPHICS, vulk->graphics_pipeline);
-		vkCmdDraw(vulk->command_buffer[i], 4, 1, 0, 0);
-		vkCmdEndRenderPass(vulk->command_buffer[i]);
-		if (vkEndCommandBuffer(vulk->command_buffer[i]) != VK_SUCCESS)
-		{
-			printf("failed to record command buffer!\n");
-			return (-1);
-		}
-		i++;
 	}
 	return (0);
 }

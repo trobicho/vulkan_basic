@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 17:55:04 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/13 11:52:19 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/14 13:14:19 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,8 +42,8 @@ static int	draw_frame(t_vulk *vulk)
 	submit_info.pWaitSemaphores = &vulk->semaphore_image_available;
 	wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	submit_info.pWaitDstStageMask = &wait_stage;
-	submit_info.commandBufferCount = 2;
-	command_buffer[0] = vulk->compute.command_buffer;
+	submit_info.commandBufferCount = 1;
+	command_buffer[0] = vulk->compute.command_buffer[img_index];
 	command_buffer[1] = vulk->command_buffer[img_index];
 	submit_info.pCommandBuffers = command_buffer;
 	submit_info.signalSemaphoreCount = 1;
