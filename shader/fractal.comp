@@ -1,0 +1,58 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
+#define MAX_ITER	100
+
+layout (local_size_x = 16, local_size_y = 16) in;
+
+layout (binding = 0, rgba8) uniform writeonly image2D result_image;
+layout (binding = 0) uniform UniformBufferObject
+{
+	vec2	min;
+	vec2	max;
+	float	time;
+}	ubo;
+
+int		mandelbrot(vec2 z)
+{
+	float	zrs;
+	float	zis;
+	float	zir;
+	vec2	c = z;
+
+	for (int i = 0; i < MAX_ITER; i++)
+	{
+		zrs = c.x * c.x;
+		zis = c.y * c.y;
+		zir = c.x * c.y;
+		if (zrs + zis > 4.0)
+			return (i);
+		c.x = zrs - zis + z.x;
+		c.y = zir + zir + z.y;
+	}
+	return (MAX_ITER);
+}
+
+void	main()
+{
+	vec3	color;
+	ivec2	dim = imageSize(result_image);
+	vec2	uv = vec2(gl_GlobalInvocationID.xy) / dim;
+	float	coloradd = 0.203005;
+
+	vec2 min = vec2(0.278587, -0.012560);
+	vec2 max = vec2(0.285413, -0.007440);
+	vec2 z = uv * (max - min) + min;
+
+	int col = mandelbrot(z);
+	if (col == MAX_ITER)
+		color = vec3(0.0, 0.0, 0.0);
+	else
+	{
+		col %= 30;
+		if (col >= 15)
+			col = 30 - col;
+		color = vec3(1.0 / col);
+	}
+	imageStore(result_image, ivec2(gl_GlobalInvocationID.xy), vec4(color, 1.0));
+}
