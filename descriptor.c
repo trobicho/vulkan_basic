@@ -6,7 +6,7 @@
 /*   By: trobicho <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/06/13 11:57:49 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/14 09:56:22 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/15 23:09:50 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,14 +147,23 @@ void	update_compute_img_desc_set(VkDevice dev, VkDescriptorSet desc_set,
 	desc_write.descriptorCount = 1;
 	desc_write.pImageInfo = &img_info;
 	vkUpdateDescriptorSets(dev, 1, &desc_write, 0, NULL);
-	/*
+}
+
+void	update_compute_post_img_desc_set(VkDevice dev, VkDescriptorSet desc_set, 
+	VkImageView image_view, VkImageLayout layout)
+{
+	VkWriteDescriptorSet	desc_write;
+	VkDescriptorImageInfo	img_info;
+
+	img_info.sampler = VK_NULL_HANDLE;
+	img_info.imageView = image_view;
+	img_info.imageLayout = layout;
+
 	desc_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	desc_write.dstSet = vulk->compute.desc_set_post;
+	desc_write.dstSet = desc_set;
 	desc_write.dstBinding = 0;
 	desc_write.dstArrayElement = 0;
 	desc_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	desc_write.descriptorCount = 1;
-	desc_write.pImageInfo = &vulk->compute.img_desc;
-	vkUpdateDescriptorSets(vulk->device, 1, &desc_write, 0, NULL);
-	*/
+	desc_write.pImageInfo = &img_info;
 }

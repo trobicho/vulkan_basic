@@ -6,7 +6,7 @@
 /*   By: trobicho <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/06/14 08:49:02 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/14 10:41:01 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/20 02:40:38 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,11 +67,11 @@ int	compute_command_buffer_create(t_vulk *vulk)
 			, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
 			, VK_DEPENDENCY_BY_REGION_BIT
 			, 0, NULL, 0, NULL, 1, &img_mem_barrier);
+		vkCmdBindPipeline(vulk->compute.command_buffer[i]
+				, VK_PIPELINE_BIND_POINT_COMPUTE, vulk->compute.pipeline);
 		vkCmdBindDescriptorSets(vulk->compute.command_buffer[i]
 				,VK_PIPELINE_BIND_POINT_COMPUTE, vulk->compute.pipeline_layout
 				, 0, 1, &vulk->compute.desc_set_pre[i], 0, NULL);
-		vkCmdBindPipeline(vulk->compute.command_buffer[i]
-				, VK_PIPELINE_BIND_POINT_COMPUTE, vulk->compute.pipeline);
 		vkCmdDispatch(vulk->compute.command_buffer[i]
 				, vulk->swap_chain_extent.width / 16
 				, vulk->swap_chain_extent.height / 16, 1);
@@ -131,6 +131,9 @@ int	command_buffer_create(t_vulk *vulk)
 		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		begin_info.pInheritanceInfo = NULL;
+		update_compute_post_img_desc_set(vulk->device
+			, vulk->compute.desc_set_post[i], vulk->image_view[i]
+			, VK_IMAGE_LAYOUT_GENERAL);
 		if (vkBeginCommandBuffer(vulk->command_buffer[i], &begin_info)
 			!= VK_SUCCESS)
 		{
@@ -143,7 +146,7 @@ int	command_buffer_create(t_vulk *vulk)
 		render_pass_info.framebuffer = vulk->framebuffer[i];
 		render_pass_info.renderArea.offset = (VkOffset2D){0, 0};
 		render_pass_info.renderArea.extent = vulk->swap_chain_extent;
-		render_pass_info.clearValueCount = 1;
+		render_pass_info.clearValueCount = 0;
 		render_pass_info.pClearValues = &clear_color;
 		img_mem_barrier = (VkImageMemoryBarrier){};
 		img_mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -173,6 +176,25 @@ int	command_buffer_create(t_vulk *vulk)
 			return (-1);
 		}
 		i++;
+	}
+	return (0);
+}
+
+int	command_pool_create(t_vulk *vulk)
+{
+	int						queue_indice;
+	VkCommandPoolCreateInfo	pool_info;
+
+	queue_indice = get_graphic_queue_family(vulk->dev_phy, vulk->surface);
+	pool_info = (VkCommandPoolCreateInfo){};
+	pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	pool_info.queueFamilyIndex = queue_indice;
+	pool_info.flags = 0;
+	if (vkCreateCommandPool(vulk->device, &pool_info, NULL
+			, &vulk->command_pool) != VK_SUCCESS)
+	{
+		printf("failed to create command pool!\n");
+		return (-1);
 	}
 	return (0);
 }

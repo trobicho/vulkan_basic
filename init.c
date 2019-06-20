@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:38 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/14 13:01:26 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/20 02:33:58 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "init.h"
+#include "validation_layer.h"
+#include "queue.h"
+#include "device.h"
 #include "init_swap_chain.h"
 #include "gpu_pipeline.h"
 #include "command_buffer.h"
 #include "descriptor.h"
+#include "image.h"
 
 static int	vulk_create_instance(t_vulk *vulk)
 {
@@ -29,22 +33,56 @@ static int	vulk_create_instance(t_vulk *vulk)
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_0;
+	uint32_t	val_layer_count;
+	char		*val_layer[1] = {"VK_LAYER_KHRONOS_validation"};
+	uint32_t	ext_count;
+	char		**ext;
 
 	VkInstanceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
-
-	const char** glfw_ext;
-	uint32_t glfw_ext_count;
-	glfw_ext = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
-	createInfo.enabledExtensionCount = glfw_ext_count;
-	createInfo.ppEnabledExtensionNames = glfw_ext;
+	val_layer_count = 1;
+	ext = get_extensions(vulk->debug, &ext_count, val_layer_count, val_layer);
+	if (ext == NULL && ext_count > 0)
+	{
+		printf("failed to get extensions!\n");
+		return (-1);
+	}
+	createInfo.enabledExtensionCount = ext_count;
+	createInfo.ppEnabledExtensionNames = ext;
 	createInfo.enabledLayerCount = 0;
+	if (vulk->debug == 1)
+	{
+		if (!val_layer_check(val_layer, val_layer_count))
+		{
+			printf("no corresponding validation layer found\n");
+			return (-1);
+		}
+		createInfo.enabledLayerCount = val_layer_count;
+		createInfo.ppEnabledLayerNames = val_layer;
+	}
 
 	if (vkCreateInstance(&createInfo, NULL, &vulk->instance) != VK_SUCCESS)
 	{
 		printf("failed to create instance!\n");
 		return (-1);
+	}
+	return (0);
+}
+
+uint32_t	find_memory_type(t_vulk *vulk, uint32_t typeFilter,
+	VkMemoryPropertyFlags properties)
+{
+	uint32_t							i;
+	VkPhysicalDeviceMemoryProperties	memProperties;
+
+	vkGetPhysicalDeviceMemoryProperties(vulk->dev_phy, &memProperties);
+	for (i = 0; i < memProperties.memoryTypeCount; i++)
+	{
+		if ((typeFilter & (1 << i)) && 
+			(memProperties.memoryTypes[i].propertyFlags & properties)
+			== properties) 
+			return (i);
 	}
 	return (0);
 }
@@ -97,116 +135,6 @@ static int	render_pass_create(t_vulk *vulk)
 	return (0);
 }
 
-static int	vulk_queue_family(VkPhysicalDevice device, VkSurfaceKHR surface)
-{
-	int						i;
-	uint32_t				queue_count;
-	VkQueueFamilyProperties	*queue;
-	VkBool32				present_support;
-
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_count, NULL);
-	if (queue_count <= 0 || (queue = (VkQueueFamilyProperties*)
-			malloc(sizeof(*queue) * queue_count)) == NULL)
-		return (-1);
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_count, queue);
-	i = 0;
-	while (i < queue_count)
-	{
-		present_support = 0;
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface
-			, &present_support);
-		if (queue[i].queueCount > 0 && queue[i].queueFlags
-			& VK_QUEUE_GRAPHICS_BIT && present_support)
-			return (i);
-		i++;
-	}
-	return (-1);
-}
-
-
-static int	vulk_is_device_suitable(VkPhysicalDevice device,
-	VkSurfaceKHR surface)
-{
-	VkPhysicalDeviceProperties	dev_prop;
-	VkPhysicalDeviceFeatures	dev_feat;
-	t_swap_chain_detail			detail;
-
-	vkGetPhysicalDeviceProperties(device, &dev_prop);
-	vkGetPhysicalDeviceFeatures(device, &dev_feat);
-	if (vulk_queue_family(device, surface) == -1)
-		return (0);
-	detail = swap_get_detail(device, surface);
-	if (detail.format == NULL || detail.present_mode == NULL)
-		return (0);
-	return (1);
-}
-
-#include <string.h>
-
-static int	vulk_logical_device(t_vulk *vulk)
-{
-	int							dev_i;
-	float						queue_priority;
-	VkDeviceCreateInfo			dev_inf = {};
-	VkDeviceQueueCreateInfo		queue_inf = {};
-	VkPhysicalDeviceFeatures	dev_feat = {};
-	char						*ext_name;
-
-	ext_name = strdup(VK_KHR_SWAPCHAIN_EXTENSION_NAME); //libc!! free??
-	if ((dev_i = vulk_queue_family(vulk->dev_phy, vulk->surface)) == -1)
-		return (-1);
-	queue_inf.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queue_inf.queueFamilyIndex = dev_i;
-	queue_inf.queueCount = 1;
-	queue_priority = 1.0f;
-	queue_inf.pQueuePriorities = &queue_priority;
-	dev_inf.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	dev_inf.pQueueCreateInfos = &queue_inf;
-	dev_inf.queueCreateInfoCount = 1;
-	dev_inf.pEnabledFeatures = &dev_feat;
-	dev_inf.enabledExtensionCount = 1;
-	dev_inf.ppEnabledExtensionNames = &ext_name;
-	dev_inf.enabledLayerCount = 0;
-	if (vkCreateDevice(vulk->dev_phy, &dev_inf, NULL, &vulk->device) != VK_SUCCESS)
-	{
-		printf("failed to create logical device!\n");
-		return (-1);
-	}
-	vkGetDeviceQueue(vulk->device, dev_i, 0, &vulk->queue_graphic);
-	return (0);
-}
-
-static int	vulk_physical_device(t_vulk *vulk)
-{
-	int					i;
-	uint32_t			device_count;
-	VkPhysicalDevice	*device;
-
-	vkEnumeratePhysicalDevices(vulk->instance, &device_count, NULL);
-	if (device_count == 0)
-	{
-		printf("failed to find GPU with Vulkan support!\n");
-		return (-1);
-	}
-	if ((device = (VkPhysicalDevice*)
-		malloc(sizeof(*device) * device_count)) == NULL)
-		return (-1);
-	vkEnumeratePhysicalDevices(vulk->instance, &device_count, device);
-	i = 0;
-	vulk->dev_phy = VK_NULL_HANDLE;
-	while (i < device_count && vulk->dev_phy == NULL)
-	{
-		if(vulk_is_device_suitable(device[i], vulk->surface))
-			vulk->dev_phy = device[i];
-		i++;
-	}
-	if (vulk->dev_phy == VK_NULL_HANDLE)
-	{
-		printf("failed to find a suitable GPU!\n");
-		return (-1);
-	}
-	return (0);
-}
 
 static int	vulk_create_surface(t_vulk *vulk)
 {
@@ -243,8 +171,7 @@ static int	vulk_swap_chain(t_vulk *vulk)
 	swap_info.imageColorSpace = format.colorSpace;
 	swap_info.imageExtent = extent;
 	swap_info.imageArrayLayers = 1;
-	swap_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
-		| VK_IMAGE_USAGE_STORAGE_BIT;
+	swap_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	swap_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	swap_info.queueFamilyIndexCount = 0;
 	swap_info.pQueueFamilyIndices = NULL;
@@ -342,25 +269,6 @@ static int	framebuffer_create(t_vulk *vulk)
 	return (0);
 }
 
-static int	command_pool_create(t_vulk *vulk)
-{
-	int						queue_indice;
-	VkCommandPoolCreateInfo	pool_info;
-
-	queue_indice = vulk_queue_family(vulk->dev_phy, vulk->surface);
-	pool_info = (VkCommandPoolCreateInfo){};
-	pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	pool_info.queueFamilyIndex = queue_indice;
-	pool_info.flags = 0;
-	if (vkCreateCommandPool(vulk->device, &pool_info, NULL
-			, &vulk->command_pool) != VK_SUCCESS)
-	{
-		printf("failed to create command pool!\n");
-		return (-1);
-	}
-	return (0);
-}
-
 static int	semaphore_create(t_vulk *vulk)
 {
 	VkSemaphoreCreateInfo	semaphore_info;
@@ -383,6 +291,7 @@ int			vulk_init(t_vulk *vulk)
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	//vulk->win = glfwCreateWindow(2560, 1440, "Vulkan", NULL, NULL);
 	vulk->win = glfwCreateWindow(800, 800, "Vulkan", NULL, NULL);
 	if (vulk_create_instance(vulk) == -1)
 		return (-1);
@@ -393,6 +302,8 @@ int			vulk_init(t_vulk *vulk)
 	if (vulk_logical_device(vulk) == -1)
 		return (-1);
 	if (vulk_swap_chain(vulk) == -1)
+		return (-1);
+	if (create_image(vulk, VK_FORMAT_R8G8B8A8_UNORM) == -1)
 		return (-1);
 	if (vulk_image_view(vulk) == -1)
 		return (-1);

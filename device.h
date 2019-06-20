@@ -1,20 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   command_buffer.h                                   :+:      :+:    :+:   */
+/*   device.h                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: trobicho <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/06/14 08:48:28 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/20 02:32:02 by trobicho         ###   ########.fr       */
+/*   Created: 2019/06/18 19:39:00 by trobicho          #+#    #+#             */
+/*   Updated: 2019/06/18 19:43:29 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef COMMAND_BUFFER
-# define COMMAND_BUFFER
+#ifndef DEVICE_H
+# define DEVICE_H
 # include "init.h"
 
-int	compute_command_buffer_create(t_vulk *vulk);
-int	command_buffer_create(t_vulk *vulk);
-int	command_pool_create(t_vulk *vulk);
+int	vulk_is_device_suitable(VkPhysicalDevice device, VkSurfaceKHR surface);
+int	vulk_physical_device(t_vulk *vulk);
+int	vulk_logical_device(t_vulk *vulk);
 #endif

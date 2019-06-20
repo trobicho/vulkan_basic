@@ -7,4 +7,5 @@ layout (location = 0) out vec4 out_color;
 void	main()
 {
 	out_color = texture(sampler_color, gl_FragCoord.xy);
+	out_color.z = 0.1;
 }

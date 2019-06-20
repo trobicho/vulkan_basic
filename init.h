@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:35 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/14 09:21:48 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/20 02:32:42 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,8 @@ typedef struct	s_compute
 {
 	VkPipelineLayout		pipeline_layout;
 	VkPipeline				pipeline;
-	VkDescriptorImageInfo	img_desc;
+	VkImage					img;
+	VkDeviceMemory			img_mem;
 	VkDescriptorSetLayout	desc_set_layout_pre;
 	VkDescriptorSetLayout	desc_set_layout_post;
 	VkDescriptorSet			*desc_set_pre;
@@ -52,8 +53,13 @@ typedef struct	s_vulk
 	VkSemaphore			semaphore_image_available;
 	VkSemaphore			semaphore_render_finish;
 	t_compute			compute;
+	int					enable_val_layer;
+	int					update;
+	int					debug;
 }				t_vulk;
 
 int				vulk_init(t_vulk *vulk);
 void			vulk_close(t_vulk *vulk);
+uint32_t		find_memory_type(t_vulk *vulk, uint32_t typeFilter
+	, VkMemoryPropertyFlags properties);
 #endif

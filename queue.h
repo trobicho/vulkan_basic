@@ -1,27 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   descriptor.h                                       :+:      :+:    :+:   */
+/*   queue.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: trobicho <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/06/13 11:56:33 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/15 21:08:28 by trobicho         ###   ########.fr       */
+/*   Created: 2019/06/18 18:14:26 by trobicho          #+#    #+#             */
+/*   Updated: 2019/06/18 18:53:28 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef DESCRIPTOR_H
-# define DESCRIPTOR_H
-
+#ifndef QUEUE_H
+# define QUEUE_H
 # define GLFW_INCLUDE_VULKAN
 # include "GLFW/glfw3.h"
-# include "init.h"
 
-int		create_desc_layout(t_vulk *vulk);
-int		create_desc_pool(t_vulk *vulk);
-int		create_desc_set(t_vulk *vulk);
-void	update_compute_img_desc_set(VkDevice dev, VkDescriptorSet desc_set, 
-	VkImageView image_view, VkImageLayout layout);
-void	update_compute_post_img_desc_set(VkDevice dev, VkDescriptorSet desc_set, 
-	VkImageView image_view, VkImageLayout layout);
+int	get_graphic_queue_family(VkPhysicalDevice device, VkSurfaceKHR surface);
+int	get_compute_queue_family(VkPhysicalDevice device);
 #endif

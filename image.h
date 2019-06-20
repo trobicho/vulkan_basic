@@ -1,20 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   command_buffer.h                                   :+:      :+:    :+:   */
+/*   image.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: trobicho <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/06/14 08:48:28 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/20 02:32:02 by trobicho         ###   ########.fr       */
+/*   Created: 2019/06/10 09:23:19 by trobicho          #+#    #+#             */
+/*   Updated: 2019/06/10 11:37:19 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef COMMAND_BUFFER
-# define COMMAND_BUFFER
+#ifndef IMAGE_H
+# define IMAGE_H
+
 # include "init.h"
 
-int	compute_command_buffer_create(t_vulk *vulk);
-int	command_buffer_create(t_vulk *vulk);
-int	command_pool_create(t_vulk *vulk);
+int		create_image(t_vulk * vulk, VkFormat format);
 #endif

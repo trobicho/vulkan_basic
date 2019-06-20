@@ -1,3 +1,3 @@
-/Volumes/Storage/goinfre/trobicho/vulkansdk-macos-1.1.106.0/macOS/bin/glslangValidator -V shader.vert
-/Volumes/Storage/goinfre/trobicho/vulkansdk-macos-1.1.106.0/macOS/bin/glslangValidator -V test.frag
-/Volumes/Storage/goinfre/trobicho/vulkansdk-macos-1.1.106.0/macOS/bin/glslangValidator -V fractal.comp
+$VULKAN_SDK_PATH/bin/glslangValidator -V shader.vert
+$VULKAN_SDK_PATH/bin/glslangValidator -V test.frag
+$VULKAN_SDK_PATH/bin/glslangValidator -V compute.comp
