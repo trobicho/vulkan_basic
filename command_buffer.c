@@ -6,7 +6,7 @@
 /*   By: trobicho <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/06/14 08:49:02 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/20 02:40:38 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/20 14:10:34 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,8 +45,6 @@ int	compute_command_buffer_create(t_vulk *vulk)
 		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		begin_info.pInheritanceInfo = NULL;
-		update_compute_img_desc_set(vulk->device, vulk->compute.desc_set_pre[i]
-			, vulk->image_view[i], VK_IMAGE_LAYOUT_GENERAL);
 		if (vkBeginCommandBuffer(vulk->compute.command_buffer[i], &begin_info)
 				!= VK_SUCCESS)
 		{
@@ -57,7 +55,7 @@ int	compute_command_buffer_create(t_vulk *vulk)
 		img_mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		img_mem_barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		img_mem_barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
-		img_mem_barrier.image = vulk->swap_chain_img[i];
+		img_mem_barrier.image = vulk->compute.img;
 		img_mem_barrier.subresourceRange = (VkImageSubresourceRange){VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 		img_mem_barrier.srcAccessMask = 0;
 		img_mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT
@@ -71,7 +69,7 @@ int	compute_command_buffer_create(t_vulk *vulk)
 				, VK_PIPELINE_BIND_POINT_COMPUTE, vulk->compute.pipeline);
 		vkCmdBindDescriptorSets(vulk->compute.command_buffer[i]
 				,VK_PIPELINE_BIND_POINT_COMPUTE, vulk->compute.pipeline_layout
-				, 0, 1, &vulk->compute.desc_set_pre[i], 0, NULL);
+				, 0, 1, &vulk->compute.desc_set_pre, 0, NULL);
 		vkCmdDispatch(vulk->compute.command_buffer[i]
 				, vulk->swap_chain_extent.width / 16
 				, vulk->swap_chain_extent.height / 16, 1);
@@ -79,7 +77,7 @@ int	compute_command_buffer_create(t_vulk *vulk)
 		img_mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		img_mem_barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
 		img_mem_barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		img_mem_barrier.image = vulk->swap_chain_img[i];
+		img_mem_barrier.image = vulk->compute.img;
 		img_mem_barrier.subresourceRange = (VkImageSubresourceRange){VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 		img_mem_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
 		img_mem_barrier.dstAccessMask = 0; 
@@ -131,9 +129,6 @@ int	command_buffer_create(t_vulk *vulk)
 		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		begin_info.pInheritanceInfo = NULL;
-		update_compute_post_img_desc_set(vulk->device
-			, vulk->compute.desc_set_post[i], vulk->image_view[i]
-			, VK_IMAGE_LAYOUT_GENERAL);
 		if (vkBeginCommandBuffer(vulk->command_buffer[i], &begin_info)
 			!= VK_SUCCESS)
 		{
@@ -152,7 +147,7 @@ int	command_buffer_create(t_vulk *vulk)
 		img_mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		img_mem_barrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
 		img_mem_barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
-		img_mem_barrier.image = vulk->swap_chain_img[i];
+		img_mem_barrier.image = vulk->compute.img;
 		img_mem_barrier.subresourceRange = (VkImageSubresourceRange){VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 		img_mem_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
 		img_mem_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
@@ -165,7 +160,7 @@ int	command_buffer_create(t_vulk *vulk)
 			, 0, NULL, 0, NULL, 1, &img_mem_barrier);
 		vkCmdBindDescriptorSets(vulk->command_buffer[i]
 			,VK_PIPELINE_BIND_POINT_COMPUTE, vulk->pipeline_layout
-			, 0, 1, &vulk->compute.desc_set_post[i], 0, NULL);
+			, 0, 1, &vulk->compute.desc_set_post, 0, NULL);
 		vkCmdBindPipeline(vulk->command_buffer[i]
 			, VK_PIPELINE_BIND_POINT_GRAPHICS, vulk->graphics_pipeline);
 		vkCmdDraw(vulk->command_buffer[i], 4, 1, 0, 0);

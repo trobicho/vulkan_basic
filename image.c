@@ -6,7 +6,7 @@
 /*   By: trobicho <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/06/10 09:23:21 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/20 01:57:18 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/20 14:12:04 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,9 @@ int		create_image(t_vulk * vulk, VkFormat format)
 	VkMemoryAllocateInfo	mem_alloc_info;
 	VkMemoryRequirements	mem_req;
 	VkSamplerCreateInfo		sampler;
+	VkImageViewCreateInfo	view_info;
 
+	vulk->compute.img_format = format;
 	vkGetPhysicalDeviceFormatProperties(vulk->dev_phy, format, &format_prop);
 	if ((format_prop.optimalTilingFeatures
 		& VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT) == 0)
@@ -90,5 +92,29 @@ int		create_image(t_vulk * vulk, VkFormat format)
 		printf("failed to create sampler!\n");
 		return (-1);
 	}
+
+	view_info = (VkImageViewCreateInfo){};
+	view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	view_info.image = vulk->compute.img;
+	view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	view_info.format = format;
+	view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+	view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+	view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+	view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+	view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	view_info.subresourceRange.baseMipLevel = 0;
+	view_info.subresourceRange.levelCount = 1;
+	view_info.subresourceRange.baseArrayLayer = 0;
+	view_info.subresourceRange.layerCount = 1;
+	if (vkCreateImageView(vulk->device, &view_info, NULL
+				, &vulk->compute.image_view) != VK_SUCCESS)
+	{
+		printf("failed to create image views!");
+		return (-1);
+	}
+	vulk->compute.img_info.sampler = vulk->compute.sampler;
+	vulk->compute.img_info.imageView = vulk->compute.image_view;
+	vulk->compute.img_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 	return (0);
 }

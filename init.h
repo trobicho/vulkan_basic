@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:35 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/20 02:32:42 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/20 14:06:12 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,15 @@ typedef struct	s_compute
 {
 	VkPipelineLayout		pipeline_layout;
 	VkPipeline				pipeline;
+	VkImageView				image_view;
 	VkImage					img;
+	VkFormat				img_format;
+	VkDescriptorImageInfo	img_info;
 	VkDeviceMemory			img_mem;
 	VkDescriptorSetLayout	desc_set_layout_pre;
 	VkDescriptorSetLayout	desc_set_layout_post;
-	VkDescriptorSet			*desc_set_pre;
-	VkDescriptorSet			*desc_set_post;
+	VkDescriptorSet			desc_set_pre;
+	VkDescriptorSet			desc_set_post;
 	VkSampler				sampler;
 	VkCommandBuffer			*command_buffer;
 }				t_compute;

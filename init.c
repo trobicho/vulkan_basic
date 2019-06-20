@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:38 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/20 02:33:58 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/06/20 14:07:22 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -320,6 +320,8 @@ int			vulk_init(t_vulk *vulk)
 	if (create_desc_pool(vulk) == -1)
 		return (-1);
 	if (create_desc_set(vulk) == -1)
+		return (-1);
+	if (update_desc_set(vulk) == -1)
 		return (-1);
 	if (compute_command_buffer_create(vulk) == -1)
 		return (-1);
