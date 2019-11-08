@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:35 by trobicho          #+#    #+#             */
-/*   Updated: 2019/05/25 15:57:05 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/11/08 18:12:32 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,6 @@
 typedef struct	s_vulk
 {
 	GLFWwindow			*win;
-	int					enable_val_layer;
 	VkInstance			instance;
 	VkDevice			device;
 	VkPhysicalDevice	dev_phy;
@@ -38,6 +37,7 @@ typedef struct	s_vulk
 	VkCommandBuffer		*command_buffer;
 	VkSemaphore			semaphore_image_available;
 	VkSemaphore			semaphore_render_finish;
+	int					debug;
 }				t_vulk;
 
 int				vulk_init(t_vulk *vulk);

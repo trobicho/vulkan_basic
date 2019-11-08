@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 18:50:38 by trobicho          #+#    #+#             */
-/*   Updated: 2019/05/26 14:56:07 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/11/08 18:20:05 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,32 +21,41 @@
 
 static int	vulk_create_instance(t_vulk *vulk)
 {
-	char	**val_layer = {"VK_LAYER_KHRONOS_validation"};
-
-	if (vulk->enable_val_layer && !val_layer_check(val_layer, 1))
-	{
-		printf("validation layers requested, but not available!\n");
-		return (-1);
-	}
-
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "Hello Triangle";
+	appInfo.pApplicationName = "Basic Triangle";
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_0;
+	uint32_t	val_layer_count;
+	char		*val_layer[1] = {"VK_LAYER_LUNARG_standard_validation"};
+	uint32_t	ext_count;
+	char		**ext;
 
 	VkInstanceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
-
-	const char** glfw_ext;
-	uint32_t glfw_ext_count;
-	glfw_ext = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
-	createInfo.enabledExtensionCount = glfw_ext_count;
-	createInfo.ppEnabledExtensionNames = glfw_ext;
+	val_layer_count = 1;
+	ext = get_extensions(vulk->debug, &ext_count);
+	if (ext == NULL && ext_count > 0)
+	{
+		printf("failed to get extensions!\n");
+		return (-1);
+	}
+	createInfo.enabledExtensionCount = ext_count;
+	createInfo.ppEnabledExtensionNames = ext;
 	createInfo.enabledLayerCount = 0;
+	if (vulk->debug == 1)
+	{
+		if (!val_layer_check(val_layer, val_layer_count))
+		{
+			printf("no corresponding validation layer found\n");
+			return (-1);
+		}
+		createInfo.enabledLayerCount = val_layer_count;
+		createInfo.ppEnabledLayerNames = val_layer;
+	}
 
 	if (vkCreateInstance(&createInfo, NULL, &vulk->instance) != VK_SUCCESS)
 	{
@@ -437,7 +446,9 @@ static int	semaphore_create(t_vulk *vulk)
 	semaphore_info = (VkSemaphoreCreateInfo){};
 	semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 	if (vkCreateSemaphore(vulk->device, &semaphore_info, NULL
-			, &vulk->semaphore_image_available) != VK_SUCCESS)
+			, &vulk->semaphore_image_available) != VK_SUCCESS
+			|| vkCreateSemaphore(vulk->device, &semaphore_info, NULL
+			, &vulk->semaphore_render_finish) != VK_SUCCESS)
 	{
 		printf("failed to create semaphore!\n");
 		return (-1);

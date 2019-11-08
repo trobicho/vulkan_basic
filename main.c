@@ -6,7 +6,7 @@
 /*   By: trobicho <trobicho@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/05/14 17:55:04 by trobicho          #+#    #+#             */
-/*   Updated: 2019/06/13 09:15:06 by trobicho         ###   ########.fr       */
+/*   Updated: 2019/11/08 18:12:45 by trobicho         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ int			main(int ac, char **av)
 {
 	t_vulk	vulk;
 
-	vulk.enable_val_layer = 0;
+	vulk.debug = 1;
 	if (vulk_init(&vulk) == -1)
 		return (EXIT_FAILURE);
 
